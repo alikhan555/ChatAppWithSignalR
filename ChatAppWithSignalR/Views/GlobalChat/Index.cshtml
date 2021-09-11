@@ -1,0 +1,66 @@
+﻿<h1>Global Chat</h1>
+
+@*<table id="chatTable">
+    <tr>
+        <th>I</th>
+        <th>He</th>
+    </tr>
+    <tr>
+        <td></td>
+        <td></td>
+    </tr>
+</table>*@
+
+
+<table id="chatTable">
+    <thead>
+        <tr>
+            <td>
+                Sent
+            </td>
+            <td>
+                Receive
+            </td>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td></td>
+            <td></td>
+        </tr>
+    </tbody>
+</table>
+
+
+<textarea id="messageInput"></textarea>
+<br />
+<button id="sendBtn">Send</button>
+
+
+@*----------------------------JAVASCRIPT--------------------------------*@
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+<script src="~/lib/signalr/dist/browser/signalr.js"></script>
+
+<script>
+
+    let signalRConnection = new signalR.HubConnectionBuilder().withUrl("/message").build();
+
+    signalRConnection.on("ReceiveMessage", function (message) {
+        $('#chatTable tbody').append("<tr><td></td><td>" + message + "</td></tr>");
+    });
+
+    signalRConnection.start().catch(function (error) {
+        console.warn(error);
+    });
+
+    $("#sendBtn").click(function () {
+        let sendingMsg = $('#messageInput').val();
+        $('#chatTable tbody').append("<tr><td>" + sendingMsg + "</td><td></td></tr>");
+
+        signalRConnection.invoke('SendMessageToAll', sendingMsg).catch(function (error) {
+            console.warn(error.tostring());
+        });
+    });
+
+</script>
