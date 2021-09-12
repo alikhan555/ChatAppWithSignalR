@@ -7,6 +7,7 @@
                 <option value="ToAll">To All</option>
                 <option value="ToMySelf">To My Self</option>
                 <option value="ToSelectedUser">To Selected User</option>
+                <option value="ToJointGroup">To Joint Group</option>
             </select>
         </div>
     </div>
@@ -16,6 +17,17 @@
             <select id="userConnectionIdDropDown" class="form-control" hidden>
                 <option>Select Connection Id</option>
             </select>
+        </div>
+    </div>
+
+    <div class="col-4">
+        <div class="form-group">
+            <input id="groupNametxt" placeholder="Group Name" class="form-control" hidden/>
+        </div>
+    </div>
+    <div class="col-2">
+        <div class="form-group">
+            <button id="joinGroupBtn" class="btn btn-primary" hidden>Join Group</button>
         </div>
     </div>
 </div>
@@ -103,6 +115,18 @@
         });
     }
 
+    function JoinGroup(groupName) {
+        signalRConnection.invoke('JoinGroup', groupName).catch(function (error) {
+            console.warn(error);
+        });
+    }
+
+    function SendMessageToGroup(groupName, message) {
+        signalRConnection.invoke('SendMessageToGroup', groupName, message).catch(function (error) {
+            console.warn(error);
+        });
+    }
+
 
 
     //-------------------------------------------------- Other DOM Manipulation ------------------------------------------------------------
@@ -121,6 +145,10 @@
             let userConnectionId = $("#userConnectionIdDropDown").val();
             SendMessageToUser(userConnectionId, sendingMsg);
         }
+        else if (groupValue === 'ToJointGroup') {
+            let groupName = $("#groupNametxt").val();
+            SendMessageToGroup(groupName, sendingMsg);
+        }
 
         $('#chatTable tbody').append("<tr><td>" + sendingMsg + "</td><td></td></tr>");
 
@@ -128,12 +156,29 @@
     });
 
     $("#group").change(function () {
-        if ($(this).val() === 'ToSelectedUser') {
-            $("#userConnectionIdDropDown").attr('hidden',false);
+        let groupDropDownVal = $(this).val();
+
+        if (groupDropDownVal === 'ToSelectedUser') {
+            $("#userConnectionIdDropDown").attr('hidden', false);
         }
         else {
             $("#userConnectionIdDropDown").attr('hidden', true);
         }
+
+        if (groupDropDownVal === 'ToJointGroup') {
+            $("#groupNametxt").attr('hidden', false);
+            $("#joinGroupBtn").attr('hidden', false);
+        }
+        else {
+            $("#groupNametxt").attr('hidden', true);
+            $("#joinGroupBtn").attr('hidden', true);
+        }
+    });
+
+    $('#joinGroupBtn').click(function () {
+        let groupName = $('#groupNametxt').val();
+        JoinGroup(groupName);
+        $('#joinGroupBtn').attr('disabled', true).removeClass('btn-primary').addClass('btn-success');
     });
 
 </script>
