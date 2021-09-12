@@ -1,18 +1,26 @@
-﻿<h1>Global Chat</h1>
+﻿<h1>Chat</h1>
 
-@*<table id="chatTable">
-    <tr>
-        <th>I</th>
-        <th>He</th>
-    </tr>
-    <tr>
-        <td></td>
-        <td></td>
-    </tr>
-</table>*@
+<div class="row">
+    <div class="col-3">
+        <div class="form-group">
+            <select id="group" class="form-control">
+                <option value="ToAll">To All</option>
+                <option value="ToMySelf">To My Self</option>
+                <option value="ToSelectedUser">To Selected User</option>
+            </select>
+        </div>
+    </div>
 
+    <div class="col-3">
+        <div class="form-group">
+            <select id="userConnectionIdDropDown" class="form-control" hidden>
+                <option>Select Connection Id</option>
+            </select>
+        </div>
+    </div>
+</div>
 
-<table id="chatTable">
+<table id="chatTable" class="table table-bordered ">
     <thead>
         <tr>
             <td>
@@ -24,43 +32,108 @@
         </tr>
     </thead>
     <tbody>
-        <tr>
-            <td></td>
-            <td></td>
-        </tr>
+        @*<tr><td></td><td></td></tr>*@
     </tbody>
 </table>
 
 
-<textarea id="messageInput"></textarea>
-<br />
-<button id="sendBtn">Send</button>
+
+
+<div class="row">
+    <div class="col-10">
+        <div class="form-group">
+            <input id="messageInput" class="form-control" />
+        </div>
+    </div>
+    <div class="col-2">
+        <div class="form-group">
+            <button id="sendBtn" class="btn btn-success col-12">Send</button>
+        </div>
+    </div>
+</div>
+
 
 
 @*----------------------------JAVASCRIPT--------------------------------*@
-
+<link rel="stylesheet" src="~/lib/bootstrap/dist/css/bootstrap.css" />
 <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
 <script src="~/lib/signalr/dist/browser/signalr.js"></script>
 
 <script>
-
+    //-------------------------------------------------- SignalR Connection Initialization ----------------------------------------------
     let signalRConnection = new signalR.HubConnectionBuilder().withUrl("/message").build();
-
-    signalRConnection.on("ReceiveMessage", function (message) {
-        $('#chatTable tbody').append("<tr><td></td><td>" + message + "</td></tr>");
-    });
 
     signalRConnection.start().catch(function (error) {
         console.warn(error);
     });
 
+
+
+    //-------------------------------------------------- SignalR Events Binding ---------------------------------------------------------
+    signalRConnection.on("ReceiveMessage", function (message) {
+        $('#chatTable tbody').append("<tr><td></td><td>" + message + "</td></tr>");
+    });
+
+    signalRConnection.on("UserConnected", function (userConnectionId) {
+        $('#userConnectionIdDropDown').append($('<option value=' + userConnectionId + '>' + userConnectionId + '</option>'));
+    });
+
+    signalRConnection.on("UserDisconnected", function (userConnectionId) {
+        $('#userConnectionIdDropDown option[value=' + userConnectionId + ']').remove();
+    });
+
+
+
+    //-------------------------------------------------- SignalR Calling Method ---------------------------------------------------------
+    function SendMessageToAll(message) {
+        signalRConnection.invoke('SendMessageToAll', message).catch(function (error) {
+            console.warn(error);
+        });
+    }
+
+    function SendMessageToCaller(message) {
+        signalRConnection.invoke('SendMessageToCaller', message).catch(function (error) {
+            console.warn(error);
+        });
+    }
+
+    function SendMessageToUser(connectionId, message) {
+        signalRConnection.invoke('SendMessageToUser', connectionId, message).catch(function (error) {
+            console.warn(error);
+        });
+    }
+
+
+
+    //-------------------------------------------------- Other DOM Manipulation ------------------------------------------------------------
     $("#sendBtn").click(function () {
-        let sendingMsg = $('#messageInput').val();
+        let messageInput = $('#messageInput');
+        let sendingMsg = messageInput.val();
+        let groupValue = $("#group").val();
+
+        if (groupValue === 'ToAll') {
+            SendMessageToAll(sendingMsg);
+        }
+        else if (groupValue === 'ToMySelf') {
+            SendMessageToCaller(sendingMsg)
+        }
+        else if (groupValue === 'ToSelectedUser') {
+            let userConnectionId = $("#userConnectionIdDropDown").val();
+            SendMessageToUser(userConnectionId, sendingMsg);
+        }
+
         $('#chatTable tbody').append("<tr><td>" + sendingMsg + "</td><td></td></tr>");
 
-        signalRConnection.invoke('SendMessageToAll', sendingMsg).catch(function (error) {
-            console.warn(error.tostring());
-        });
+        messageInput.val("");
+    });
+
+    $("#group").change(function () {
+        if ($(this).val() === 'ToSelectedUser') {
+            $("#userConnectionIdDropDown").attr('hidden',false);
+        }
+        else {
+            $("#userConnectionIdDropDown").attr('hidden', true);
+        }
     });
 
 </script>
