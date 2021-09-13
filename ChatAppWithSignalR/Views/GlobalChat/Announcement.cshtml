@@ -1,0 +1,22 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<form asp-controller="GlobalChat" asp-action="Announcement">
+    <div class="row">
+        <div class="col-4">
+            <div class="form-group">
+                <input class="form-control" name="message" />
+            </div>
+        </div>
+
+        <div class="col-4">
+            <div class="form-group">
+                <input value="Send" class="btn btn-success" type="submit" />
+            </div>
+        </div>
+    </div>
+</form>
+
+
+
+
+<link rel="stylesheet" src="~/lib/bootstrap/dist/css/bootstrap.css" />
